@@ -7,13 +7,11 @@
 using namespace std;
 
 
-typedef uint32_t QueueFamilyIndex;
-
-
 VulkanState::VulkanState(WindowState& window) : _window{window} {
     this->initVulkanInstance();
     this->createSurface();
-    this->selectPhysicalDeviceAndQueueFamily();
+    this->selectPhysicalDevice();
+    this->selectQueueFamily();
     this->createLogicalDeviceAndQueue();
 }
 
@@ -84,75 +82,105 @@ void VulkanState::destroySurface() {
 }
 
 
-void VulkanState::selectPhysicalDeviceAndQueueFamily() {
+VkPhysicalDevice VulkanState::findSuitablePhysicalDevice(PhysicalDeviceSuitabilityChecker f) {
     // enumerate physical devices
 
     uint32_t numDevices = 0;
     vkEnumeratePhysicalDevices(this->vkinstance, &numDevices, nullptr);
 
-    if (numDevices == 0){
-        cerr << "No physical devices found" << endl;
-        exit(1);
-    }
-
     vector<VkPhysicalDevice> physicalDevices{numDevices};
     vkEnumeratePhysicalDevices(this->vkinstance, &numDevices, physicalDevices.data());
 
-    // then enumerate queue families
-
-    vector<vector<VkQueueFamilyProperties>*> queueFamilies{numDevices};
-
-    for (int pdi = 0; pdi < numDevices; pdi++) {
-        uint32_t numQueueFamilies;
-        vkGetPhysicalDeviceQueueFamilyProperties(
-            physicalDevices[pdi],
-            &numQueueFamilies,
-            nullptr
-        );
-
-        queueFamilies[pdi] = new vector<VkQueueFamilyProperties>{numQueueFamilies};
-        vkGetPhysicalDeviceQueueFamilyProperties(
-            physicalDevices[pdi],
-            &numQueueFamilies,
-            queueFamilies[pdi]->data()
-        );
-    }
-
-    vector<tuple<VkPhysicalDevice, QueueFamilyIndex>> suitableDevQfCombos;
-
-    for (int pdi = 0; pdi < queueFamilies.size(); pdi++) {
-        auto pd = physicalDevices[pdi];
-        auto& qfs = *queueFamilies[pdi];
-
-        for (QueueFamilyIndex qfi = 0; qfi < queueFamilies[pdi]->size(); qfi++) {
-            auto& qf = qfs[qfi];
-
-            VkBool32 hasPresentSupport = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(
-                pd,
-                qfi,
-                this->surface,
-                &hasPresentSupport
-            );
-
-            if ((qf.queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0 && hasPresentSupport) {
-                suitableDevQfCombos.push_back(make_tuple(pd, qfi));
-            }
+    for (auto pd : physicalDevices) {
+        if (f(pd)) {
+            return pd;
         }
     }
 
-    if (suitableDevQfCombos.empty()) {
-        cerr << "No queue families supporting graphics found" << endl;
+    cerr << "No physical devices found" << endl;
+    exit(1);
+}
+
+void VulkanState::selectPhysicalDevice() {
+    this->physicalDevice = this->findSuitablePhysicalDevice([this](auto pd){
+        VkPhysicalDeviceProperties deviceProperties;
+        VkPhysicalDeviceFeatures deviceFeatures;
+
+        vkGetPhysicalDeviceProperties(pd, &deviceProperties);
+        vkGetPhysicalDeviceFeatures(pd, &deviceFeatures);
+
+        return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
+               deviceFeatures.geometryShader;
+    });
+
+    cout << "Physical Device " << this->getPhysicalDeviceProperties() << endl;
+}
+
+
+QueueFamilyChoice VulkanState::findSuitableQueueFamily(QueueFamilySuitabilityChecker f, VkPhysicalDevice pd) {
+    // then enumerate queue families
+
+    uint32_t numQueueFamilies;
+    vkGetPhysicalDeviceQueueFamilyProperties(
+        pd,
+        &numQueueFamilies,
+        nullptr
+    );
+
+    vector<VkQueueFamilyProperties> queueFamilies{numQueueFamilies};
+    vkGetPhysicalDeviceQueueFamilyProperties(
+        pd,
+        &numQueueFamilies,
+        queueFamilies.data()
+    );
+
+    // get all the queue families that fit the given criteria
+
+    vector<QueueFamilyChoice> suitableQueueFamilyChoices;
+
+    for (QueueFamilyIndex qfi = 0; qfi < queueFamilies.size(); qfi++) {
+        auto& qf = queueFamilies[qfi];
+
+        if (f(pd, qfi, qf)) {
+            suitableQueueFamilyChoices.push_back(make_tuple(pd, qfi));
+        }
+    }
+
+    if (suitableQueueFamilyChoices.empty()) {
+        cerr << "No supported queue families found" << endl;
         exit(1);
     }
 
-    auto [pd, qfi] = suitableDevQfCombos[0];
+    return suitableQueueFamilyChoices[0];
+}
 
-    this->physicalDevice = pd;
-    this->queueFamilyIndex = qfi;
+void VulkanState::selectQueueFamily() {
+    auto [a, graphics_qfi] = this->findSuitableQueueFamily([this](
+            VkPhysicalDevice pd,
+            QueueFamilyIndex qfi,
+            VkQueueFamilyProperties const& qf){
+        return (qf.queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0;
+    }, this->physicalDevice);
 
-    cout << "Physical Device " << this->getPhysicalDeviceProperties() << endl;
+    auto [b, present_qfi] = this->findSuitableQueueFamily([this](
+            VkPhysicalDevice pd,
+            QueueFamilyIndex qfi,
+            VkQueueFamilyProperties const& qf){
+        VkBool32 hasPresentSupport = false;
+        vkGetPhysicalDeviceSurfaceSupportKHR(
+            pd,
+            qfi,
+            this->surface,
+            &hasPresentSupport
+        );
+        return hasPresentSupport;
+    }, this->physicalDevice);
+
+    this->queueFamilyIndex = graphics_qfi;
+    this->presentQueueFamilyIndex = present_qfi;
+    
     cout << "Queue Family Index " << this->queueFamilyIndex << endl;
+    cout << "Present Queue Family Index " << this->queueFamilyIndex << endl;
 }
 
 
@@ -191,6 +219,13 @@ void VulkanState::createLogicalDeviceAndQueue() {
         this->queueFamilyIndex,
         0,
         &this->queue
+    );
+
+    vkGetDeviceQueue(
+        this->device,
+        this->presentQueueFamilyIndex,
+        0,
+        &this->presentQueue
     );
 }
 

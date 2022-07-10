@@ -3,6 +3,7 @@
 #include <tuple>
 #include <string>
 #include <cstdint>
+#include <functional>
 
 #include <vulkan/vulkan.h>
 

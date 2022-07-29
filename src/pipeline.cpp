@@ -71,7 +71,6 @@ void Pipeline::createPipelineLayout() {
         .pushConstantRangeCount = 0, // Optional
         .pPushConstantRanges = nullptr, // Optiona
     };
-            :while
     if (vkCreatePipelineLayout(this->state, &pipelineLayoutInfo, nullptr, &this->pipelineLayout) != VK_SUCCESS) {
         cerr << "Unable to create pipeline layout" << endl;
         exit(1);

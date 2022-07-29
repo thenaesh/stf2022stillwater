@@ -1,22 +1,7 @@
-#ifndef BOILERPLATE_H
-#define BOILERPLATE_H
 #include <boilerplate.hpp>
-#endif
-
-#ifndef WINDOW_H
-#define WINDOW_H
 #include <window.hpp>
-#endif
-
-#ifndef VULKANSTATE_H
-#define VULKANSTATE_H
 #include <vulkanstate.hpp>
-#endif
-
-#ifndef PIPELINE_H
-#define PIPELINE_H
 #include <pipeline.hpp>
-#endif
 
 using namespace std;
 

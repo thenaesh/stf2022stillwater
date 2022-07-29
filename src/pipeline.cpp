@@ -1,7 +1,4 @@
-#ifndef PIPELINE_H
-#define PIPELINE_H
 #include <pipeline.hpp>
-#endif
 
 using namespace std;
 

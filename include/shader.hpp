@@ -1,7 +1,8 @@
-#ifndef VULKANSTATE_H
-#define VULKANSTATE_H
+#ifndef _SHADER_H
+#define _SHADER_H
+
+
 #include <vulkanstate.hpp>
-#endif
 
 
 class Shader {
@@ -31,3 +32,6 @@ public:
 
     static std::vector<VkPipelineShaderStageCreateInfo> computePipelineShaderStageCreateInfos(std::vector<Shader> const& shaders);
 };
+
+
+#endif

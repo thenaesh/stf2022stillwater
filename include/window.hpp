@@ -2,10 +2,7 @@
 #define _WINDOW_H
 
 
-#ifndef BOILERPLATE_H
-#define BOILERPLATE_H
 #include <boilerplate.hpp>
-#endif
 
 
 class WindowState {

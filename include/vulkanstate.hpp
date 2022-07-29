@@ -2,16 +2,8 @@
 #define _VULKANSTATE_H
 
 
-#ifndef BOILERPLATE_H
-#define BOILERPLATE_H
-#include "vulkan/vulkan_core.h"
 #include <boilerplate.hpp>
-#endif
-
-#ifndef WINDOW_H
-#define WINDOW_H
 #include <window.hpp>
-#endif
 
 
 typedef uint32_t QueueFamilyIndex;

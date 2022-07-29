@@ -1,9 +1,6 @@
 #include <fstream>
 
-#ifndef SHADER_H
-#define SHADER_H
 #include <shader.hpp>
-#endif
 
 using namespace std;
 

@@ -1,10 +1,7 @@
 #include <cstring>
-
-#ifndef VULKANSTATE_H
-#define VULKANSTATE_H
 #include <algorithm>
+
 #include <vulkanstate.hpp>
-#endif
 
 using namespace std;
 

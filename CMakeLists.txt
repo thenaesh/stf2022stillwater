@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.15)
 set(CMAKE_CXX_STANDARD 17)
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Debug)
+endif()
+
+# set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+
 
 set(LIBS_ROOT "~/Libraries")
 
@@ -23,6 +31,8 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/window.cpp
     src/vulkanstate.cpp
+    src/shader.cpp
+    src/pipeline.cpp
 )
 
 target_include_directories(${PROJECT_NAME}

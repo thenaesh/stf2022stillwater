@@ -1,3 +1,7 @@
+#ifndef _BOILERPLATE_H
+#define _BOILERPLATE_H
+
+
 #include <iostream>
 #include <vector>
 #include <tuple>
@@ -35,3 +39,6 @@ constexpr bool contains(std::vector<T> const& outer, std::vector<T> const& inner
 
     return true;
 }
+
+
+#endif

@@ -1,3 +1,7 @@
+#ifndef _WINDOW_H
+#define _WINDOW_H
+
+
 #ifndef BOILERPLATE_H
 #define BOILERPLATE_H
 #include <boilerplate.hpp>
@@ -27,3 +31,6 @@ private:
     void destroyWindow();
     void getRequiredExtensions();
 };
+
+
+#endif

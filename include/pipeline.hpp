@@ -1,3 +1,6 @@
+#ifndef _PIPELINE_H
+#define _PIPELINE_H
+
 #ifndef VULKANSTATE_H
 #define VULKANSTATE_H
 #include <vulkanstate.hpp>
@@ -35,3 +38,6 @@ private:
     void createPipeline();
     void destroyPipeline();
 };
+
+
+#endif

@@ -1,3 +1,7 @@
+#ifndef _VULKANSTATE_H
+#define _VULKANSTATE_H
+
+
 #ifndef BOILERPLATE_H
 #define BOILERPLATE_H
 #include "vulkan/vulkan_core.h"
@@ -83,3 +87,6 @@ private:
     void createImageViews();
     void destroyImageViews();
 };
+
+
+#endif

@@ -4,6 +4,8 @@
 #include <string>
 #include <cstdint>
 #include <functional>
+#include <algorithm>
+#include <limits>
 
 #include <vulkan/vulkan.h>
 
@@ -14,3 +16,22 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
+
+
+template <typename U, typename V>
+constexpr std::vector<V> map(std::vector<U> const& xs, std::function<V(U const&)> f) {
+    std::vector<V> ys(xs.size());
+    std::transform(xs.begin(), xs.end(), ys.begin(), f);
+    return ys;
+}
+
+template <typename T>
+constexpr bool contains(std::vector<T> const& outer, std::vector<T> const& inner) {
+    for (auto const& e : inner) {
+        if (std::find(outer.begin(), outer.end(), e) == outer.end()) {
+            return false;
+        }
+    }
+
+    return true;
+}

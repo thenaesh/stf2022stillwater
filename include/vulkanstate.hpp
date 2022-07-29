@@ -18,11 +18,16 @@ typedef std::function<bool(VkPhysicalDevice, QueueFamilyIndex, VkQueueFamilyProp
 typedef std::tuple<VkPhysicalDevice, QueueFamilyIndex> QueueFamilyChoice;
 
 
+struct SwapChainSupportDetails {
+    VkSurfaceCapabilitiesKHR capabilities;
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> presentModes;
+};
+
 class VulkanState {
     WindowState& _window;
 
     VkInstance vkinstance;
-
 
     VkPhysicalDevice physicalDevice;
     VkDevice device;
@@ -33,13 +38,24 @@ class VulkanState {
     uint32_t presentQueueFamilyIndex;
     VkQueue presentQueue;
 
+public:
     VkSurfaceKHR surface;
+
+    VkSwapchainKHR swapChain;
+    VkFormat swapChainImageFormat;
+    VkExtent2D swapChainExtent;
+    std::vector<VkImage> swapChainImages;
+
+    std::vector<VkImageView> imageViews;
 
 public:
     VulkanState(WindowState& window);
     virtual ~VulkanState();
 
     std::string getPhysicalDeviceProperties();
+
+    operator VkDevice() const { return this->device; }
+    operator VkPhysicalDevice() const { return this->physicalDevice; }
 
 private:
     void initVulkanInstance();
@@ -56,4 +72,14 @@ private:
 
     void createLogicalDeviceAndQueue();
     void destroyLogicalDeviceAndQueue();
+
+    SwapChainSupportDetails querySwapChainSupport();
+    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+    VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+    VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+    void createSwapChain();
+    void destroySwapChain();
+
+    void createImageViews();
+    void destroyImageViews();
 };

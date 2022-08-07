@@ -6,6 +6,7 @@
 
 
 class Shader {
+    bool hasMoved;
 
     VulkanState const& state;
 
@@ -17,6 +18,7 @@ class Shader {
 public:
 
     Shader(VulkanState const& state, VkShaderStageFlagBits stage, std::string filename);
+    Shader(Shader&& o);
     virtual ~Shader();
 
 private:

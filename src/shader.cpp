@@ -5,12 +5,20 @@
 using namespace std;
 
 
-Shader::Shader(VulkanState const& state, VkShaderStageFlagBits stage, string filename): state{state}, stage{stage} {
+Shader::Shader(VulkanState const& state, VkShaderStageFlagBits stage, string filename): hasMoved{false}, state{state}, stage{stage} {
     this->readFromFile(filename);
     this->createShaderModule();
 }
 
+Shader::Shader(Shader&& o): hasMoved{false}, state{move(o.state)}, stage{o.stage}, bytecode{move(o.bytecode)}, shaderModule{o.shaderModule} {
+    o.hasMoved = true;
+}
+
 Shader::~Shader() {
+    if (this->hasMoved) {
+        return;
+    }
+
     this->destroyShaderModule();
 }
 

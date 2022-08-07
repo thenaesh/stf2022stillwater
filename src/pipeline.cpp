@@ -3,7 +3,7 @@
 using namespace std;
 
 
-Pipeline::Pipeline(VulkanState const& state, vector<Shader> shaders) : state{state}, shaders{shaders} {
+Pipeline::Pipeline(VulkanState const& state, vector<Shader> shaders) : state{state}, shaders{move(shaders)} {
     this->createRenderPass();
     this->createPipelineLayout();
     this->createPipeline();

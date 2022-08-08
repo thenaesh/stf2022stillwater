@@ -6,6 +6,9 @@
 #include <shader.hpp>
 
 
+typedef std::function<void(VkCommandBuffer&, VkExtent2D const&)> CommandBufferRecorder;
+
+
 class Pipeline {
 
     VulkanState const& state;
@@ -15,6 +18,13 @@ class Pipeline {
     VkRenderPass renderPass;
     VkPipelineLayout pipelineLayout;
     VkPipeline pipeline;
+
+    std::vector<VkFramebuffer> framebuffers;
+    VkCommandBuffer commandBuffer;
+
+    VkSemaphore imageAvailableSemaphore;
+    VkSemaphore renderFinishedSemaphore;
+    VkFence inFlightFence;
 
 public:
 
@@ -31,6 +41,20 @@ private:
 
     void createPipeline();
     void destroyPipeline();
+
+    void createFramebuffers();
+    void destroyFramebuffers();
+
+    void createSyncPrimitives();
+    void destroySyncPrimitives();
+
+    void allocateCommandBuffer();
+
+    void recordRenderPass(CommandBufferRecorder f, uint32_t imageIndex);
+
+public:
+    void render(CommandBufferRecorder f);
+    void waitIdle();
 };
 
 

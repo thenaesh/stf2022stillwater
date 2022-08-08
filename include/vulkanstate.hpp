@@ -28,13 +28,13 @@ class VulkanState {
     VkPhysicalDevice physicalDevice;
     VkDevice device;
 
+public:
     uint32_t queueFamilyIndex;
     VkQueue queue;
 
     uint32_t presentQueueFamilyIndex;
     VkQueue presentQueue;
 
-public:
     VkSurfaceKHR surface;
 
     VkSwapchainKHR swapChain;
@@ -44,6 +44,8 @@ public:
 
     std::vector<VkImageView> imageViews;
 
+    VkCommandPool commandPool;
+
 public:
     VulkanState(WindowState& window);
     virtual ~VulkanState();
@@ -52,6 +54,9 @@ public:
 
     operator VkDevice() const { return this->device; }
     operator VkPhysicalDevice() const { return this->physicalDevice; }
+    operator VkCommandPool() const { return this->commandPool; }
+    operator VkSwapchainKHR() const { return this->swapChain; }
+    operator VkExtent2D() const { return this->swapChainExtent; }
 
 private:
     void initVulkanInstance();
@@ -78,6 +83,9 @@ private:
 
     void createImageViews();
     void destroyImageViews();
+
+    void createCommandPool();
+    void destroyCommandPool();
 };
 
 

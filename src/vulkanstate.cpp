@@ -52,9 +52,11 @@ VulkanState::VulkanState(WindowState& window) : _window{window} {
     this->createLogicalDeviceAndQueue();
     this->createSwapChain();
     this->createImageViews();
+    this->createCommandPool();
 }
 
 VulkanState::~VulkanState() {
+    this->destroyCommandPool();
     this->destroyImageViews();
     this->destroySwapChain();
     this->destroyLogicalDeviceAndQueue();
@@ -460,4 +462,26 @@ void VulkanState::destroyImageViews() {
     for (auto imageView : this->imageViews) {
         vkDestroyImageView(this->device, imageView, nullptr);
     }
+}
+
+
+void VulkanState::createCommandPool() {
+    VkCommandPoolCreateInfo poolInfo{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .queueFamilyIndex = this->queueFamilyIndex,
+    };
+
+    if (vkCreateCommandPool(
+        this->device,
+        &poolInfo,
+        nullptr,
+        &this->commandPool) != VK_SUCCESS) {
+            cerr << "Failed to create command pool" << endl;
+            exit(1);
+    }
+}
+
+void VulkanState::destroyCommandPool() {
+    vkDestroyCommandPool(this->device, this->commandPool, nullptr);
 }

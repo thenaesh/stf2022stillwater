@@ -10,6 +10,8 @@
 #include <functional>
 #include <algorithm>
 #include <limits>
+#include <chrono>
+#include <thread>
 
 #include <vulkan/vulkan.h>
 

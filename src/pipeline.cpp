@@ -7,9 +7,15 @@ Pipeline::Pipeline(VulkanState const& state, vector<Shader> shaders) : state{sta
     this->createRenderPass();
     this->createPipelineLayout();
     this->createPipeline();
+    this->createFramebuffers();
+    this->createSyncPrimitives();
+
+    this->allocateCommandBuffer();
 }
 
 Pipeline::~Pipeline() {
+    this->destroySyncPrimitives();
+    this->destroyFramebuffers();
     this->destroyPipeline();
     this->destroyPipelineLayout();
     this->destroyRenderPass();
@@ -39,12 +45,23 @@ void Pipeline::createRenderPass() {
         .pColorAttachments = &colorAttachmentRef,
     };
 
+    VkSubpassDependency dependency{
+      .srcSubpass = VK_SUBPASS_EXTERNAL,
+      .dstSubpass = 0,
+      .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+      .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+      .srcAccessMask = 0,
+      .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+    };
+
     VkRenderPassCreateInfo renderPassInfo{
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
         .attachmentCount = 1,
         .pAttachments = &colorAttachment,
         .subpassCount = 1,
         .pSubpasses = &subpass,
+        .dependencyCount = 1,
+        .pDependencies = &dependency,
     };
 
     if (vkCreateRenderPass(this->state, &renderPassInfo, nullptr, &this->renderPass) !=
@@ -209,4 +226,199 @@ void Pipeline::createPipeline() {
 
 void Pipeline::destroyPipeline() {
     vkDestroyPipeline(state, this->pipeline, nullptr);
+}
+
+
+void Pipeline::createFramebuffers() {
+    this->framebuffers.resize(this->state.imageViews.size());
+
+    for (size_t i = 0; i < this->state.imageViews.size(); i++) {
+        VkImageView attachments[] = {this->state.imageViews[i]};
+
+        VkFramebufferCreateInfo framebufferInfo{
+            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+            .renderPass = this->renderPass,
+            .attachmentCount = 1,
+            .pAttachments = attachments,
+            .width = this->state.swapChainExtent.width,
+            .height = this->state.swapChainExtent.height,
+            .layers = 1,
+        };
+
+        if (vkCreateFramebuffer(
+            this->state,
+            &framebufferInfo,
+            nullptr,
+            &this->framebuffers[i]) != VK_SUCCESS) {
+                cerr << "Unable to create framebuffers" << endl;
+                exit(1);
+        }
+    }
+}
+
+void Pipeline::destroyFramebuffers() {
+    for (auto fb : this->framebuffers) {
+        vkDestroyFramebuffer(this->state, fb, nullptr);
+    }
+}
+
+
+void Pipeline::createSyncPrimitives() {
+    VkSemaphoreCreateInfo semaphoreInfo{
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+    };
+
+    VkFenceCreateInfo fenceInfo{
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .flags = VK_FENCE_CREATE_SIGNALED_BIT,
+    };
+
+    auto createSemaphore = [this, semaphoreInfo](VkSemaphore* pSemaphore){
+        return vkCreateSemaphore(
+            this->state,
+            &semaphoreInfo,
+            nullptr,
+            pSemaphore) == VK_SUCCESS;
+    };
+
+    auto createFence = [this, fenceInfo](VkFence* pFence){
+        return vkCreateFence(
+            this->state,
+            &fenceInfo,
+            nullptr,
+            pFence) == VK_SUCCESS;
+    };
+
+    if (!(createSemaphore(&this->imageAvailableSemaphore) && createSemaphore(&this->renderFinishedSemaphore) && createFence(&this->inFlightFence))) {
+        cerr << "Failed to create synchronization primitives for rendering" << endl;
+        exit(1);
+    }
+}
+
+void Pipeline::destroySyncPrimitives() {
+    vkDestroyFence(this->state, this->inFlightFence, nullptr);
+    vkDestroySemaphore(this->state, this->renderFinishedSemaphore, nullptr);
+    vkDestroySemaphore(this->state, this->imageAvailableSemaphore, nullptr);
+}
+
+
+void Pipeline::allocateCommandBuffer() {
+    VkCommandBufferAllocateInfo allocInfo{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = this->state,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1,
+    };
+
+    if (vkAllocateCommandBuffers(
+        this->state,
+        &allocInfo,
+        &this->commandBuffer) != VK_SUCCESS) {
+            cerr << "Unable to allocate command buffer" << endl;
+            exit(1);
+        }
+}
+
+
+void Pipeline::recordRenderPass(CommandBufferRecorder f, uint32_t imageIndex) {
+    VkCommandBufferBeginInfo beginInfo{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = 0,
+        .pInheritanceInfo = nullptr,
+    };
+
+    if (vkBeginCommandBuffer(this->commandBuffer, &beginInfo) != VK_SUCCESS) {
+        cerr << "Failed to begin recording render pass commands" << endl;
+        exit(1);
+    }
+
+    VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+
+    VkRenderPassBeginInfo renderPassInfo{
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        .renderPass = this->renderPass,
+        .framebuffer = this->framebuffers[imageIndex],
+        .renderArea = VkRect2D{
+            .offset = VkOffset2D{0, 0},
+            .extent = this->state.swapChainExtent,
+        },
+        .clearValueCount = 1,
+        .pClearValues = &clearColor,
+    };
+
+    vkCmdBeginRenderPass(
+        commandBuffer,
+        &renderPassInfo,
+        VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdBindPipeline(
+        commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        this->pipeline);
+
+    f(this->commandBuffer, this->state);
+
+    vkCmdEndRenderPass(this->commandBuffer);
+
+    if (vkEndCommandBuffer(this->commandBuffer) != VK_SUCCESS) {
+        cerr << "Failed to record render pass commands" << endl;
+        exit(1);
+    }
+}
+
+void Pipeline::render(CommandBufferRecorder f) {
+    // wait for previous frame to finish rendering
+    vkWaitForFences(this->state, 1, &this->inFlightFence, VK_TRUE, UINT64_MAX);
+    // acquire fence by clearing signal from it
+    vkResetFences(this->state, 1, &this->inFlightFence);
+
+    uint32_t imageIndex;
+    vkAcquireNextImageKHR(
+        this->state,
+        this->state,
+        UINT64_MAX,
+        this->imageAvailableSemaphore,
+        VK_NULL_HANDLE,
+        &imageIndex);
+
+    vkResetCommandBuffer(this->commandBuffer, 0);
+    this->recordRenderPass(f, imageIndex);
+
+    VkSemaphore signalSemaphores[] = {this->renderFinishedSemaphore};
+    VkSemaphore waitSemaphores[] = {this->imageAvailableSemaphore};
+    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+
+    VkSubmitInfo submitInfo{
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = waitSemaphores,
+        .pWaitDstStageMask = waitStages,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &this->commandBuffer,
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores = signalSemaphores,
+    };
+
+    if (vkQueueSubmit(this->state.queue, 1, &submitInfo, this->inFlightFence)) {
+        cerr << "Failed to submit render pass buffer" << endl;
+        exit(1);
+    }
+
+    VkSwapchainKHR swapChains[] = {this->state};
+
+    VkPresentInfoKHR presentInfo{
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = signalSemaphores,
+        .swapchainCount = 1,
+        .pSwapchains = swapChains,
+        .pImageIndices = &imageIndex,
+        .pResults = nullptr,
+    };
+
+    vkQueuePresentKHR(this->state.presentQueue, &presentInfo);
+}
+
+void Pipeline::waitIdle() {
+    vkDeviceWaitIdle(this->state);
 }

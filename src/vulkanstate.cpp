@@ -176,8 +176,14 @@ void VulkanState::selectPhysicalDevice() {
         vkGetPhysicalDeviceProperties(pd, &deviceProperties);
         vkGetPhysicalDeviceFeatures(pd, &deviceFeatures);
 
-        return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
-               deviceFeatures.geometryShader;
+        bool isDiscreteGpu = deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+        bool isIntegratedGpu = deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
+        bool isVirtualGpu = deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU;
+        bool isCpu = deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_CPU;
+
+        cout << deviceProperties.deviceType << endl;
+
+        return (isDiscreteGpu || isIntegratedGpu || isVirtualGpu || isCpu) && deviceFeatures.geometryShader;
     });
 
     cout << "Physical Device " << this->getPhysicalDeviceProperties() << endl;

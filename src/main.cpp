@@ -8,6 +8,21 @@ using namespace std;
 using namespace std::chrono_literals;
 
 
+struct PushConstants{
+    glm::vec4 time;
+    glm::mat4 rotationMatrix;
+
+    PushConstants(float t, float theta) {
+        this->time = glm::vec4{t, 0.0f, 0.0f, 0.0f};
+        this->rotationMatrix = glm::rotate(
+            glm::mat4{1.0f},
+            theta,
+            glm::normalize(glm::vec3{0.0f, 0.0f, 1.0f})
+        );
+    }
+};
+
+
 int main(int argc, char** argv) {
     WindowState window{"Still Water", 1024, 1024};
     VulkanState vkstate{window};
@@ -25,11 +40,29 @@ int main(int argc, char** argv) {
         "/home/thenaesh/Documents/still_water_vulkan/shaders/frag.spv"
     });
 
-    Pipeline pipeline{vkstate, move(shaders)};
+    vector<VkPushConstantRange> pushConstantRanges;
+
+    pushConstantRanges.push_back(VkPushConstantRange{
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .offset = 0,
+        .size = sizeof (PushConstants),
+    });
+
+    Pipeline pipeline{
+        vkstate,
+        move(shaders),
+        move(pushConstantRanges)};
+
+    float time = 0.0f;
+    float theta = 0.0f;
 
     while (window.isActive()) {
+        auto pushConstants = PushConstants{time, theta};
+        time = (time >= 1.0f) ? -1.0f : time + 0.001f;
+        theta = (theta >= glm::two_pi<float>()) ? 0.0f : theta + 0.001f;
+
         glfwPollEvents();
-        pipeline.render([](VkCommandBuffer &commandBuffer, VkExtent2D const& swapChainExtent) {
+        pipeline.render([&](VkCommandBuffer& commandBuffer, VkExtent2D const& swapChainExtent) {
             VkViewport viewport{};
             viewport.x = 0.0f;
             viewport.y = 0.0f;
@@ -43,6 +76,8 @@ int main(int argc, char** argv) {
             scissor.offset = {0, 0};
             scissor.extent = swapChainExtent;
             vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+            pipeline.pushConstant(sizeof (PushConstants), &pushConstants);
 
             vkCmdDraw(commandBuffer, 3, 1, 0, 0);
         });

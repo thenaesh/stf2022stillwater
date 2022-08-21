@@ -18,6 +18,7 @@ class Pipeline {
     VkRenderPass renderPass;
     VkPipelineLayout pipelineLayout;
     VkPipeline pipeline;
+    std::vector<VkPushConstantRange> pushConstantRanges;
 
     std::vector<VkFramebuffer> framebuffers;
     VkCommandBuffer commandBuffer;
@@ -28,7 +29,7 @@ class Pipeline {
 
 public:
 
-    Pipeline(VulkanState const& state, std::vector<Shader> shaders);
+    Pipeline(VulkanState const& state, std::vector<Shader> shaders, std::vector<VkPushConstantRange> pushConstantRanges);
     virtual ~Pipeline();
 
 private:
@@ -55,6 +56,7 @@ private:
 public:
     void render(CommandBufferRecorder f);
     void waitIdle();
+    void pushConstant(size_t constantSize, void const* constant);
 };
 
 

@@ -3,7 +3,7 @@
 using namespace std;
 
 
-Pipeline::Pipeline(VulkanState const& state, vector<Shader> shaders) : state{state}, shaders{move(shaders)} {
+Pipeline::Pipeline(VulkanState const& state, vector<Shader> shaders, vector<VkPushConstantRange> pushConstantRanges) : state{state}, shaders{move(shaders)}, pushConstantRanges{move(pushConstantRanges)} {
     this->createRenderPass();
     this->createPipelineLayout();
     this->createPipeline();
@@ -82,8 +82,8 @@ void Pipeline::createPipelineLayout() {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .setLayoutCount = 0, // Optional
         .pSetLayouts = nullptr, // Optional
-        .pushConstantRangeCount = 0, // Optional
-        .pPushConstantRanges = nullptr, // Optiona
+        .pushConstantRangeCount = static_cast<uint32_t>(this->pushConstantRanges.size()),
+        .pPushConstantRanges = this->pushConstantRanges.data(),
     };
     if (vkCreatePipelineLayout(this->state, &pipelineLayoutInfo, nullptr, &this->pipelineLayout) != VK_SUCCESS) {
         cerr << "Unable to create pipeline layout" << endl;
@@ -421,4 +421,14 @@ void Pipeline::render(CommandBufferRecorder f) {
 
 void Pipeline::waitIdle() {
     vkDeviceWaitIdle(this->state);
+}
+
+void Pipeline::pushConstant(size_t constantSize, void const* constant) {
+    vkCmdPushConstants(
+        this->commandBuffer,
+        this->pipelineLayout,
+        VK_SHADER_STAGE_VERTEX_BIT,
+        0,
+        constantSize,
+        constant);
 }

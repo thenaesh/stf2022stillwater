@@ -32,12 +32,12 @@ int main(int argc, char** argv) {
     shaders.push_back(Shader{
         vkstate,
         VK_SHADER_STAGE_VERTEX_BIT,
-        "/home/thenaesh/Documents/still_water_vulkan/shaders/vert.spv"
+        (argc > 1) ? argv[1] : "/home/thenaesh/Documents/still_water_vulkan/shaders/vert.spv"
     });
     shaders.push_back(Shader{
         vkstate,
         VK_SHADER_STAGE_FRAGMENT_BIT,
-        "/home/thenaesh/Documents/still_water_vulkan/shaders/frag.spv"
+        (argc > 2) ? argv[2] : "/home/thenaesh/Documents/still_water_vulkan/shaders/frag.spv"
     });
 
     vector<VkPushConstantRange> pushConstantRanges;

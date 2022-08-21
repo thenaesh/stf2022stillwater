@@ -40,9 +40,13 @@ public:
     VkSwapchainKHR swapChain;
     VkFormat swapChainImageFormat;
     VkExtent2D swapChainExtent;
-    std::vector<VkImage> swapChainImages;
 
+    std::vector<VkImage> swapChainImages;
     std::vector<VkImageView> imageViews;
+
+    VkImage depthImage;
+    VkDeviceMemory depthImageMemory;
+    VkImageView depthImageView;
 
     VkCommandPool commandPool;
 
@@ -86,6 +90,21 @@ private:
 
     void createCommandPool();
     void destroyCommandPool();
+
+    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+    void createImage(
+        VkFormat format,
+        VkImageTiling tiling,
+        VkImageUsageFlags flags,
+        VkMemoryPropertyFlags,
+        VkImage& image,
+        VkDeviceMemory&
+        imageMemory);
+    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags flags);
+
+    void createDepthBuffer();
+    void destroyDepthBuffer();
 };
 
 

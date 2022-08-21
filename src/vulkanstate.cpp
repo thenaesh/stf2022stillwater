@@ -52,11 +52,13 @@ VulkanState::VulkanState(WindowState& window) : _window{window} {
     this->createLogicalDeviceAndQueue();
     this->createSwapChain();
     this->createImageViews();
+    this->createDepthBuffer();
     this->createCommandPool();
 }
 
 VulkanState::~VulkanState() {
     this->destroyCommandPool();
+    this->destroyDepthBuffer();
     this->destroyImageViews();
     this->destroySwapChain();
     this->destroyLogicalDeviceAndQueue();
@@ -490,4 +492,115 @@ void VulkanState::createCommandPool() {
 
 void VulkanState::destroyCommandPool() {
     vkDestroyCommandPool(this->device, this->commandPool, nullptr);
+}
+
+void VulkanState::createDepthBuffer() {
+    auto depthFormat = VK_FORMAT_D32_SFLOAT;
+
+    this->createImage(
+        depthFormat,
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        this->depthImage,
+        this->depthImageMemory);
+
+    this->depthImageView = createImageView(
+        this->depthImage,
+        depthFormat,
+        VK_IMAGE_ASPECT_DEPTH_BIT);
+}
+
+void VulkanState::destroyDepthBuffer() {
+    vkDestroyImageView(this->device, this->depthImageView, nullptr);
+    vkDestroyImage(this->device, this->depthImage, nullptr);
+    vkFreeMemory(this->device, this->depthImageMemory, nullptr);
+}
+
+
+uint32_t VulkanState::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(this->physicalDevice, &memProperties);
+
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+      if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+        return i;
+      }
+    }
+
+    cerr << "No suitable memory type" << endl;
+    exit(1);
+}
+
+void VulkanState::createImage(
+        VkFormat format,
+        VkImageTiling tiling,
+        VkImageUsageFlags usage,
+        VkMemoryPropertyFlags properties,
+        VkImage& image,
+        VkDeviceMemory& imageMemory
+    ) {
+    VkImageCreateInfo imageInfo{};
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.extent.width = this->swapChainExtent.width;
+    imageInfo.extent.height = this->swapChainExtent.height;
+    imageInfo.extent.depth = 1;
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.format = format;
+    imageInfo.tiling = tiling;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageInfo.usage = usage;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateImage(this->device, &imageInfo, nullptr, &image) != VK_SUCCESS) {
+        cerr << "Failed to create iamge" << endl;
+        exit(1);
+    }
+
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(device, image, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+
+    if (vkAllocateMemory(
+            device,
+            &allocInfo,
+            nullptr,
+            &imageMemory) != VK_SUCCESS
+    ) {
+        cerr << "Failed to allocate image memory" << endl;
+        exit(1);
+    }
+
+    vkBindImageMemory(device, image, imageMemory, 0);
+}
+
+VkImageView VulkanState::createImageView(VkImage image, VkFormat format, VkImageAspectFlags flags) {
+    VkImageViewCreateInfo viewInfo{
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .image = image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = format,
+        .subresourceRange = VkImageSubresourceRange{
+            .aspectMask = flags,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+        },
+    };
+
+    VkImageView imageView;
+    if (vkCreateImageView(device, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
+        cerr << "Failed to create image view" << endl;
+        exit(1);
+    }
+
+    return imageView;
 }

@@ -7,7 +7,7 @@ endif()
 
 # set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 
 set(LIBS_ROOT "~/Libraries")
@@ -26,6 +26,8 @@ set(CMAKE_PREFIX_PATH "${GLFW_LIBS_DIR};${VULKAN_LIBS_DIR}")
 
 
 project(StillWaterVulkan)
+
+add_compile_definitions(NDEBUG)
 
 add_executable(${PROJECT_NAME}
     src/main.cpp

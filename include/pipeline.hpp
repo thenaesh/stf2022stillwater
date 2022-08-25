@@ -6,21 +6,21 @@
 #include <shader.hpp>
 
 
-typedef std::function<void(VkCommandBuffer&, VkExtent2D const&)> CommandBufferRecorder;
+typedef function<void(VkCommandBuffer&, VkExtent2D const&)> CommandBufferRecorder;
 
 
 class Pipeline {
 
     VulkanState const& state;
 
-    std::vector<Shader> shaders;
+    vector<Shader> shaders;
 
     VkRenderPass renderPass;
     VkPipelineLayout pipelineLayout;
     VkPipeline pipeline;
-    std::vector<VkPushConstantRange> pushConstantRanges;
+    vector<VkPushConstantRange> pushConstantRanges;
 
-    std::vector<VkFramebuffer> framebuffers;
+    vector<VkFramebuffer> framebuffers;
     VkCommandBuffer commandBuffer;
 
     VkSemaphore imageAvailableSemaphore;
@@ -29,7 +29,7 @@ class Pipeline {
 
 public:
 
-    Pipeline(VulkanState const& state, std::vector<Shader> shaders, std::vector<VkPushConstantRange> pushConstantRanges);
+    Pipeline(VulkanState const& state, vector<Shader> shaders, vector<VkPushConstantRange> pushConstantRanges);
     virtual ~Pipeline();
 
 private:

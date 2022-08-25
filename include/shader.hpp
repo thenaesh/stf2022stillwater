@@ -12,18 +12,18 @@ class Shader {
 
     VkShaderStageFlagBits stage;
 
-    std::vector<char> bytecode;
+    vector<char> bytecode;
     VkShaderModule shaderModule;
 
 public:
 
-    Shader(VulkanState const& state, VkShaderStageFlagBits stage, std::string filename);
+    Shader(VulkanState const& state, VkShaderStageFlagBits stage, string filename);
     Shader(Shader&& o);
     virtual ~Shader();
 
 private:
 
-    void readFromFile(std::string filename);
+    void readFromFile(string filename);
 
     void createShaderModule();
     void destroyShaderModule();
@@ -32,7 +32,7 @@ private:
 
 public:
 
-    static std::vector<VkPipelineShaderStageCreateInfo> computePipelineShaderStageCreateInfos(std::vector<Shader> const& shaders);
+    static vector<VkPipelineShaderStageCreateInfo> computePipelineShaderStageCreateInfos(vector<Shader> const& shaders);
 };
 
 

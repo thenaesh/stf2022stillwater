@@ -3,8 +3,6 @@
 
 #include <vulkanstate.hpp>
 
-using namespace std;
-
 #ifndef NDEBUG
 
 const std::vector<const char *> validationLayers = {

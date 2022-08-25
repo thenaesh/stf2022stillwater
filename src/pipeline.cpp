@@ -1,7 +1,5 @@
 #include <pipeline.hpp>
 
-using namespace std;
-
 
 Pipeline::Pipeline(VulkanState const& state, vector<Shader> shaders, vector<VkPushConstantRange> pushConstantRanges) : state{state}, shaders{move(shaders)}, pushConstantRanges{move(pushConstantRanges)} {
     this->createRenderPass();

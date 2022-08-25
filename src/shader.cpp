@@ -2,8 +2,6 @@
 
 #include <shader.hpp>
 
-using namespace std;
-
 
 Shader::Shader(VulkanState const& state, VkShaderStageFlagBits stage, string filename): hasMoved{false}, state{state}, stage{stage} {
     this->readFromFile(filename);

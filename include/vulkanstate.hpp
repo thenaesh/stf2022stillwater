@@ -8,16 +8,16 @@
 
 typedef uint32_t QueueFamilyIndex;
 
-typedef std::function<bool(VkPhysicalDevice)> PhysicalDeviceSuitabilityChecker;
-typedef std::function<bool(VkPhysicalDevice, QueueFamilyIndex, VkQueueFamilyProperties const&)> QueueFamilySuitabilityChecker;
+typedef function<bool(VkPhysicalDevice)> PhysicalDeviceSuitabilityChecker;
+typedef function<bool(VkPhysicalDevice, QueueFamilyIndex, VkQueueFamilyProperties const&)> QueueFamilySuitabilityChecker;
 
-typedef std::tuple<VkPhysicalDevice, QueueFamilyIndex> QueueFamilyChoice;
+typedef tuple<VkPhysicalDevice, QueueFamilyIndex> QueueFamilyChoice;
 
 
 struct SwapChainSupportDetails {
     VkSurfaceCapabilitiesKHR capabilities;
-    std::vector<VkSurfaceFormatKHR> formats;
-    std::vector<VkPresentModeKHR> presentModes;
+    vector<VkSurfaceFormatKHR> formats;
+    vector<VkPresentModeKHR> presentModes;
 };
 
 class VulkanState {
@@ -41,8 +41,8 @@ public:
     VkFormat swapChainImageFormat;
     VkExtent2D swapChainExtent;
 
-    std::vector<VkImage> swapChainImages;
-    std::vector<VkImageView> imageViews;
+    vector<VkImage> swapChainImages;
+    vector<VkImageView> imageViews;
 
     VkImage depthImage;
     VkDeviceMemory depthImageMemory;
@@ -54,7 +54,7 @@ public:
     VulkanState(WindowState& window);
     virtual ~VulkanState();
 
-    std::string getPhysicalDeviceProperties();
+    string getPhysicalDeviceProperties();
 
     operator VkDevice() const { return this->device; }
     operator VkPhysicalDevice() const { return this->physicalDevice; }
@@ -79,8 +79,8 @@ private:
     void destroyLogicalDeviceAndQueue();
 
     SwapChainSupportDetails querySwapChainSupport();
-    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-    VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const vector<VkSurfaceFormatKHR>& availableFormats);
+    VkPresentModeKHR chooseSwapPresentMode(const vector<VkPresentModeKHR>& availablePresentModes);
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
     void createSwapChain();
     void destroySwapChain();

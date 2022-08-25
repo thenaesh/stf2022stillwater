@@ -27,17 +27,20 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 
+using namespace std;
+
+
 template <typename U, typename V>
-constexpr std::vector<V> map(std::vector<U> const& xs, std::function<V(U const&)> f) {
-    std::vector<V> ys(xs.size());
-    std::transform(xs.begin(), xs.end(), ys.begin(), f);
+constexpr vector<V> map(vector<U> const& xs, function<V(U const&)> f) {
+    vector<V> ys(xs.size());
+    transform(xs.begin(), xs.end(), ys.begin(), f);
     return ys;
 }
 
 template <typename T>
-constexpr bool contains(std::vector<T> const& outer, std::vector<T> const& inner) {
+constexpr bool contains(vector<T> const& outer, vector<T> const& inner) {
     for (auto const& e : inner) {
-        if (std::find(outer.begin(), outer.end(), e) == outer.end()) {
+        if (find(outer.begin(), outer.end(), e) == outer.end()) {
             return false;
         }
     }

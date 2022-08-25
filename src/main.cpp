@@ -6,18 +6,19 @@
 
 using namespace std;
 using namespace std::chrono_literals;
+using namespace glm;
 
 
 struct PushConstants{
-    glm::vec4 time;
-    glm::mat4 rotationMatrix;
+    vec4 time;
+    mat4 rotationMatrix;
 
     PushConstants(float t, float theta) {
-        this->time = glm::vec4{t, 0.0f, 0.0f, 0.0f};
-        this->rotationMatrix = glm::rotate(
-            glm::mat4{1.0f},
+        this->time = vec4{t, 0.0f, 0.0f, 0.0f};
+        this->rotationMatrix = rotate(
+            mat4{1.0f},
             theta,
-            glm::normalize(glm::vec3{0.0f, 0.0f, 1.0f})
+            normalize(vec3{0.0f, 0.0f, 1.0f})
         );
     }
 };
@@ -59,7 +60,7 @@ int main(int argc, char** argv) {
     while (window.isActive()) {
         auto pushConstants = PushConstants{time, theta};
         time = (time >= 1.0f) ? -1.0f : time + 0.001f;
-        theta = (theta >= glm::two_pi<float>()) ? 0.0f : theta + 0.001f;
+        theta = (theta >= two_pi<float>()) ? 0.0f : theta + 0.001f;
 
         glfwPollEvents();
         pipeline.render([&](VkCommandBuffer& commandBuffer, VkExtent2D const& swapChainExtent) {

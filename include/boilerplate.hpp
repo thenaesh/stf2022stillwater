@@ -7,6 +7,7 @@
 #include <vector>
 #include <tuple>
 #include <string>
+#include <cstring>
 #include <cstdint>
 #include <functional>
 #include <algorithm>

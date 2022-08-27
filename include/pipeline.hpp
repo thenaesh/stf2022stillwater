@@ -4,6 +4,7 @@
 
 #include <vulkanstate.hpp>
 #include <shader.hpp>
+#include <buffer.hpp>
 
 
 typedef function<void(VkCommandBuffer&, VkExtent2D const&)> CommandBufferRecorder;
@@ -19,6 +20,7 @@ class Pipeline {
     VkPipelineLayout pipelineLayout;
     VkPipeline pipeline;
     vector<VkPushConstantRange> pushConstantRanges;
+    VertexDescriptions vertexDescriptions;
 
     vector<VkFramebuffer> framebuffers;
     VkCommandBuffer commandBuffer;
@@ -29,8 +31,14 @@ class Pipeline {
 
 public:
 
-    Pipeline(VulkanState const& state, vector<Shader> shaders, vector<VkPushConstantRange> pushConstantRanges);
+    Pipeline(
+        VulkanState const& state,
+        vector<Shader> shaders,
+        vector<VkPushConstantRange> pushConstantRanges,
+        VertexDescriptions vertexBufferDescriptions);
     virtual ~Pipeline();
+
+    operator VkPipeline () { return this->pipeline; }
 
 private:
 

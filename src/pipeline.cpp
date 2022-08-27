@@ -1,7 +1,13 @@
+#include "buffer.hpp"
 #include <pipeline.hpp>
 
 
-Pipeline::Pipeline(VulkanState const& state, vector<Shader> shaders, vector<VkPushConstantRange> pushConstantRanges) : state{state}, shaders{move(shaders)}, pushConstantRanges{move(pushConstantRanges)} {
+Pipeline::Pipeline(
+        VulkanState const& state,
+        vector<Shader> shaders,
+        vector<VkPushConstantRange> pushConstantRanges,
+        VertexDescriptions vertexBufferDescriptions
+) : state{state}, shaders{move(shaders)}, pushConstantRanges{move(pushConstantRanges)}, vertexDescriptions{move(vertexBufferDescriptions)} {
     this->createRenderPass();
     this->createPipelineLayout();
     this->createPipeline();
@@ -119,10 +125,10 @@ void Pipeline::destroyPipelineLayout() {
 void Pipeline::createPipeline() {
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-        .vertexBindingDescriptionCount = 0,
-        .pVertexBindingDescriptions = nullptr, // Optional
-        .vertexAttributeDescriptionCount = 0,
-        .pVertexAttributeDescriptions = nullptr, // Optional
+        .vertexBindingDescriptionCount = this->vertexDescriptions.numBindingDescriptions(),
+        .pVertexBindingDescriptions = this->vertexDescriptions.getBindingDescriptionsPtr(),
+        .vertexAttributeDescriptionCount = this->vertexDescriptions.numAttributeDescriptions(),
+        .pVertexAttributeDescriptions = this->vertexDescriptions.getAttributeDescriptionsPtr(),
     };
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{

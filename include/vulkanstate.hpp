@@ -62,6 +62,18 @@ public:
     operator VkSwapchainKHR() const { return this->swapChain; }
     operator VkExtent2D() const { return this->swapChainExtent; }
 
+    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+    void createImage(
+        VkFormat format,
+        VkImageTiling tiling,
+        VkImageUsageFlags flags,
+        VkMemoryPropertyFlags,
+        VkImage& image,
+        VkDeviceMemory&
+        imageMemory);
+    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags flags);
+
 private:
     void initVulkanInstance();
     void destroyVulkanInstance();
@@ -90,18 +102,6 @@ private:
 
     void createCommandPool();
     void destroyCommandPool();
-
-    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-
-    void createImage(
-        VkFormat format,
-        VkImageTiling tiling,
-        VkImageUsageFlags flags,
-        VkMemoryPropertyFlags,
-        VkImage& image,
-        VkDeviceMemory&
-        imageMemory);
-    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags flags);
 
     void createDepthBuffer();
     void destroyDepthBuffer();

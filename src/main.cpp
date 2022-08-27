@@ -22,6 +22,46 @@ struct PushConstants{
     }
 };
 
+struct Vertex {
+    vec3 position;
+    vec3 color;
+
+    static constexpr unsigned int num_fields = 2;
+
+    static constexpr VkVertexInputAttributeDescription getPositionAttributeDescription() {
+        return {
+            .location = 0,
+            .binding = 0,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = offsetof(Vertex, position),
+        };
+    }
+
+    static constexpr VkVertexInputAttributeDescription getColorAttributeDescription() {
+        return {
+            .location = 1,
+            .binding = 0,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = offsetof(Vertex, color),
+        };
+    }
+
+    static constexpr array<VkVertexInputAttributeDescription, num_fields> getAttributeDescriptions() {
+        return {
+            getPositionAttributeDescription(),
+            getColorAttributeDescription(),
+        };
+    }
+
+    static constexpr VkVertexInputBindingDescription getBindingDescription() {
+        return {
+            .binding = 0,
+            .stride = sizeof (Vertex),
+            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+        };
+    }
+};
+
 
 int main(int argc, char** argv) {
     WindowState window{"Still Water", 1024, 1024};
@@ -48,18 +88,36 @@ int main(int argc, char** argv) {
         .size = sizeof (PushConstants),
     });
 
+    auto vertexDescriptions = VertexDescriptions::create<Vertex>();
+
     Pipeline pipeline{
         vkstate,
         move(shaders),
-        move(pushConstantRanges)};
+        move(pushConstantRanges),
+        move(vertexDescriptions)};
 
     float time = 0.0f;
     float theta = 0.0f;
+
+    VertexBuffer<Vertex> vertexBuffer{vkstate, 6};
 
     while (window.isActive()) {
         auto pushConstants = PushConstants{time, theta};
         time = (time >= 1.0f) ? -1.0f : time + 0.001f;
         theta = (theta >= two_pi<float>()) ? 0.0f : theta + 0.001f;
+
+        auto t = abs(time);
+        auto st = t * 0.2f;
+
+        vertexBuffer.setVertices({
+            Vertex{.position = {-0.38f, -0.38f, 0.0f}, .color = {1.0f - t, t, 0.0f}},
+            Vertex{.position = {0.38f, 0.38f, 0.0f}, .color = {0.0f, 1.0f - t, t}},
+            Vertex{.position = {-0.38f - st, 0.38f + st, 0.0f}, .color = {t, 0.0f, 1.0f - t}},
+            Vertex{.position = {-0.38f, -0.38f, 0.0f}, .color = {1.0f - t, t, 0.0f}},
+            Vertex{.position = {0.38f + st, -0.38f - st, 0.0f}, .color = {1.0f - t, t, 0.0f}},
+            Vertex{.position = {0.38f, 0.38f, 0.0f}, .color = {0.0f, 1.0f - t, t}},
+        });
+        vertexBuffer.syncWithGpuMemory();
 
         glfwPollEvents();
         pipeline.render([&](VkCommandBuffer& commandBuffer, VkExtent2D const& swapChainExtent) {
@@ -79,7 +137,21 @@ int main(int argc, char** argv) {
 
             pipeline.pushConstant(sizeof (PushConstants), &pushConstants);
 
-            vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+            vkCmdBindPipeline(
+                commandBuffer,
+                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                pipeline);
+
+            VkBuffer vertexBuffers[] = {vertexBuffer};
+            VkDeviceSize offsets[] = {0};
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+            vkCmdDraw(
+                commandBuffer,
+                vertexBuffer.numVertices(),
+                1,
+                0,
+                0);
         });
         this_thread::sleep_for(1ms);
     }

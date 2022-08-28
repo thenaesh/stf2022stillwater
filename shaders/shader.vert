@@ -8,7 +8,7 @@ layout(location = 0) out vec3 fragColor;
 
 layout(push_constant) uniform constants
 {
-	vec2 time;
+    vec2 time;
     ivec2 gridBounds;
     mat4 colorChangeMatrix;
     mat4 cameraMatrix;

@@ -87,6 +87,11 @@ struct VertexBuffer {
         this->vertices.insert(this->vertices.end(), vs.begin(), vs.end());
     }
 
+    void setVertices(vector<VertexT> vs) {
+        this->vertices.clear();
+        this->vertices.insert(this->vertices.end(), vs.begin(), vs.end());
+    }
+
     void syncWithGpuMemory() {
         void* gpuMem;
 

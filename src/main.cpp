@@ -63,6 +63,59 @@ struct Vertex {
 };
 
 
+vector<Vertex> generateVertexGrid(int num_rows, int num_cols) {
+    if (num_rows < 2 || num_cols < 2) {
+        cerr << "Vertex grid must have at least 2 rows and 2 columns" << endl;
+        exit(1);
+    }
+
+    auto row_gap = 1.0f / static_cast<float>(num_rows);
+    auto col_gap = 1.0f / static_cast<float>(num_cols);
+
+    vec3 colors[]{
+        {1.0f, 0.0f, 0.0f},
+        {0.0f, 1.0f, 0.0f},
+        {0.0f, 0.0f, 1.0f},
+    };
+
+    vector<Vertex> triangleVertices;
+
+    // use a sliding window of rectangles (4 vertices each)
+    for (int r = 0; r < num_rows - 1; r++) {
+        for (int c = 0; c < num_cols - 1; c++) {
+            auto color = colors[(r + c) % 3];
+            // get all triangles in window
+            Vertex tl{
+                .position = {r * row_gap - 0.5f, c * col_gap - 0.5f, 0.0f},
+                .color = color
+            };
+            Vertex tr{
+                .position = {r * row_gap - 0.5f, (c + 1) * col_gap - 0.5f, 0.0f},
+                .color = color
+            };
+            Vertex bl{
+                .position = {(r + 1) * row_gap - 0.5f, c * col_gap - 0.5f, 0.0f},
+                .color = color
+            };
+            Vertex br{
+                .position = {(r + 1) * row_gap - 0.5f, (c + 1) * col_gap - 0.5f, 0.0f},
+                .color = color
+            };
+            // push first triangle
+            triangleVertices.push_back(tl);
+            triangleVertices.push_back(br);
+            triangleVertices.push_back(bl);
+            // push second triangle
+            triangleVertices.push_back(tr);
+            triangleVertices.push_back(br);
+            triangleVertices.push_back(tl);
+        }
+    }
+
+    return triangleVertices;
+}
+
+
 int main(int argc, char** argv) {
     WindowState window{"Still Water", 1024, 1024};
     VulkanState vkstate{window};
@@ -99,7 +152,7 @@ int main(int argc, char** argv) {
     float time = 0.0f;
     float theta = 0.0f;
 
-    VertexBuffer<Vertex> vertexBuffer{vkstate, 6};
+    VertexBuffer<Vertex> vertexBuffer{vkstate, 1000000};
 
     while (window.isActive()) {
         auto pushConstants = PushConstants{time, theta};
@@ -109,14 +162,9 @@ int main(int argc, char** argv) {
         auto t = abs(time);
         auto st = t * 0.2f;
 
-        vertexBuffer.setVertices({
-            Vertex{.position = {-0.38f, -0.38f, 0.0f}, .color = {1.0f - t, t, 0.0f}},
-            Vertex{.position = {0.38f, 0.38f, 0.0f}, .color = {0.0f, 1.0f - t, t}},
-            Vertex{.position = {-0.38f - st, 0.38f + st, 0.0f}, .color = {t, 0.0f, 1.0f - t}},
-            Vertex{.position = {-0.38f, -0.38f, 0.0f}, .color = {1.0f - t, t, 0.0f}},
-            Vertex{.position = {0.38f + st, -0.38f - st, 0.0f}, .color = {1.0f - t, t, 0.0f}},
-            Vertex{.position = {0.38f, 0.38f, 0.0f}, .color = {0.0f, 1.0f - t, t}},
-        });
+        vertexBuffer.setVertices(generateVertexGrid(
+            42,
+            69));
         vertexBuffer.syncWithGpuMemory();
 
         glfwPollEvents();

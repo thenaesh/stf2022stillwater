@@ -117,7 +117,7 @@ vector<Vertex> generateVertexGrid(int num_rows, int num_cols) {
 
 
 int main(int argc, char** argv) {
-    WindowState window{"Still Water", 1024, 1024};
+    WindowState window{"Still Water", 2560, 1440};
     VulkanState vkstate{window};
 
     vector<Shader> shaders;

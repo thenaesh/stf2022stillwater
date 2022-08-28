@@ -9,24 +9,39 @@ using namespace glm;
 
 
 struct PushConstants{
-    vec4 time;
-    mat4 rotationMatrix;
+    vec2 time;
+    ivec2 gridBounds;
+    mat4 colorChangeMatrix;  // TODO: this one just for fun, can probably remove
+    mat4 cameraMatrix;
+    mat4 perspectiveMatrix;
 
-    PushConstants(float t, float theta) {
-        this->time = vec4{t, 0.0f, 0.0f, 0.0f};
-        this->rotationMatrix = rotate(
+    PushConstants(float t, float theta, ivec2 gridBounds, vec3 cameraPosition, vec3 cameraTarget) {
+        this->time = vec2{t, theta};
+        this->gridBounds = gridBounds,
+        this->colorChangeMatrix = rotate(
             mat4{1.0f},
             theta,
-            normalize(vec3{0.0f, 0.0f, 1.0f})
+            normalize(vec3{1.0f, 0.0f, 0.0f})
         );
+        this->cameraMatrix = lookAt(
+            cameraPosition,
+            cameraTarget,
+            vec3{0.0f, 0.0f, 1.0f}
+        );
+        this->perspectiveMatrix = perspective(
+            -pi<float>() / 3,
+            16.0f/9.0f,
+            0.1f,
+            1.0f);
     }
 };
 
 struct Vertex {
     vec3 position;
     vec3 color;
+    ivec2 coords;
 
-    static constexpr unsigned int num_fields = 2;
+    static constexpr unsigned int num_fields = 3;
 
     static constexpr VkVertexInputAttributeDescription getPositionAttributeDescription() {
         return {
@@ -46,10 +61,20 @@ struct Vertex {
         };
     }
 
+    static constexpr VkVertexInputAttributeDescription getCoordsAttributeDescription() {
+      return {
+          .location = 2,
+          .binding = 0,
+          .format = VK_FORMAT_R32G32_SINT,
+          .offset = offsetof(Vertex, coords),
+      };
+    }
+
     static constexpr array<VkVertexInputAttributeDescription, num_fields> getAttributeDescriptions() {
         return {
             getPositionAttributeDescription(),
             getColorAttributeDescription(),
+            getCoordsAttributeDescription(),
         };
     }
 
@@ -86,20 +111,40 @@ vector<Vertex> generateVertexGrid(int num_rows, int num_cols) {
             auto color = colors[(r + c) % 3];
             // get all triangles in window
             Vertex tl{
-                .position = {r * row_gap - 0.5f, c * col_gap - 0.5f, 0.0f},
-                .color = color
+                .position = {
+                    r * row_gap - 0.5f,
+                    c * col_gap - 0.5f,
+                    0.0f,
+                },
+                .color = color,
+                .coords = {r, c},
             };
             Vertex tr{
-                .position = {r * row_gap - 0.5f, (c + 1) * col_gap - 0.5f, 0.0f},
-                .color = color
+                .position = {
+                    r * row_gap - 0.5f,
+                    (c + 1) * col_gap - 0.5f,
+                    0.0f,
+                },
+                .color = color,
+                .coords = {r, c + 1},
             };
             Vertex bl{
-                .position = {(r + 1) * row_gap - 0.5f, c * col_gap - 0.5f, 0.0f},
-                .color = color
+                .position = {
+                    (r + 1) * row_gap - 0.5f,
+                    c * col_gap - 0.5f,
+                    0.0f,
+                },
+                .color = color,
+                .coords = {r + 1, c},
             };
             Vertex br{
-                .position = {(r + 1) * row_gap - 0.5f, (c + 1) * col_gap - 0.5f, 0.0f},
-                .color = color
+                .position = {
+                    (r + 1) * row_gap - 0.5f,
+                    (c + 1) * col_gap - 0.5f,
+                    0.0f,
+                },
+                .color = color,
+                .coords = {r + 1, c + 1},
             };
             // push first triangle
             triangleVertices.push_back(tl);
@@ -150,17 +195,20 @@ int main(int argc, char** argv) {
         move(vertexDescriptions)};
 
     float time = 0.0f;
-    float theta = 0.0f;
+    float theta = half_pi<float>();
 
     VertexBuffer<Vertex> vertexBuffer{vkstate, 1000000};
 
     while (window.isActive()) {
-        auto pushConstants = PushConstants{time, theta};
+        auto pushConstants = PushConstants{
+            time,
+            theta,
+            ivec2{42, 69},
+            vec3{-0.5f, -0.5f, 0.1f},
+            vec3{0.5f, 0.5f, 0.0f},
+        };
         time = (time >= 1.0f) ? -1.0f : time + 0.001f;
         theta = (theta >= two_pi<float>()) ? 0.0f : theta + 0.001f;
-
-        auto t = abs(time);
-        auto st = t * 0.2f;
 
         vertexBuffer.setVertices(generateVertexGrid(
             42,

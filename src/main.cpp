@@ -1,4 +1,5 @@
 #include <boilerplate.hpp>
+#include <chrono>
 #include <thread>
 #include <window.hpp>
 #include <vulkanstate.hpp>
@@ -11,28 +12,74 @@ using namespace glm;
 struct PushConstants{
     vec2 time;
     ivec2 gridBounds;
-    mat4 colorChangeMatrix;  // TODO: this one just for fun, can probably remove
-    mat4 cameraMatrix;
-    mat4 perspectiveMatrix;
+    uvec2 jaga;  // 0 1 2 3
+    uvec2 agaj;  // 1 2 3 0
+    uvec2 gaja;  // 2 3 0 1
+    uvec2 ajag;  // 3 0 1 2
+    mat4 viewTransformMatrix;
 
-    PushConstants(float t, float theta, ivec2 gridBounds, vec3 cameraPosition, vec3 cameraTarget) {
-        this->time = vec2{t, theta};
-        this->gridBounds = gridBounds,
-        this->colorChangeMatrix = rotate(
-            mat4{1.0f},
-            theta,
-            normalize(vec3{1.0f, 0.0f, 0.0f})
-        );
-        this->cameraMatrix = lookAt(
+    PushConstants(float t, ivec2 gridBounds, vec3 cameraPosition, vec3 cameraTarget, char const* input) {
+        this->time = vec2{t, 0.0f};
+        this->gridBounds = gridBounds;
+
+        mat4 cameraMatrix = lookAt(
             cameraPosition,
             cameraTarget,
             vec3{0.0f, 0.0f, 1.0f}
         );
-        this->perspectiveMatrix = perspective(
+        mat4 perspectiveMatrix = perspective(
             -pi<float>() / 3,
             16.0f/9.0f,
             0.1f,
             1.0f);
+        this->viewTransformMatrix = perspectiveMatrix * cameraMatrix;
+
+        this->processInput(input);
+    }
+
+    void doRotatingCopy(char const* sb, char* db, size_t offset, size_t rotationOffset) {
+        for (int i = 0; i < 4; i++) {
+            int j = offset + ((rotationOffset + i) % 4);  // dest index
+            int k = offset + i;  // src index
+            db[j] = sb[k];
+        }
+    }
+
+    void processInput(char const* input) {
+        if (strncmp(input, "STF-", 4)) {
+            cerr << "Wrong input format" << endl;
+            exit(1);
+        }
+
+        for (int i = 0; i < 32; i++) {
+            if (input[4 + i] == '\0') {
+                cerr << "Wrong input format" << endl;
+                exit(1);
+            }
+        }
+
+        uint32_t jaga_buf[8];  // to be copied over into the uvec2s
+
+        char const* src_buf = input + 4;
+        char* dest_buf = reinterpret_cast<char*>(jaga_buf);
+
+        // populating jaga uvec2
+        this->doRotatingCopy(src_buf, dest_buf, 0, 0);
+        this->doRotatingCopy(src_buf, dest_buf, 4, 0);
+        // populating agaj vec2
+        this->doRotatingCopy(src_buf, dest_buf, 8, 1);
+        this->doRotatingCopy(src_buf, dest_buf, 12, 1);
+        // populating gaja uvec2
+        this->doRotatingCopy(src_buf, dest_buf, 16, 2);
+        this->doRotatingCopy(src_buf, dest_buf, 20, 2);
+        // populating ajag uvec2
+        this->doRotatingCopy(src_buf, dest_buf, 24, 3);
+        this->doRotatingCopy(src_buf, dest_buf, 28, 3);
+
+        this->jaga = uvec2{jaga_buf[0], jaga_buf[1]};
+        this->agaj = uvec2{jaga_buf[2], jaga_buf[3]};
+        this->gaja = uvec2{jaga_buf[4], jaga_buf[5]};
+        this->ajag = uvec2{jaga_buf[6], jaga_buf[7]};
     }
 };
 
@@ -161,7 +208,22 @@ vector<Vertex> generateVertexGrid(int num_rows, int num_cols) {
 }
 
 
+float computeElapsedTime(chrono::steady_clock::time_point referenceTimePoint, float upperBound) {
+    auto currentTimePoint = chrono::steady_clock::now();
+    auto elapsedTime = currentTimePoint - referenceTimePoint;
+    int elapsedMilliseconds = chrono::duration_cast<chrono::milliseconds>(elapsedTime).count();
+    float elapsedSeconds = static_cast<float>(elapsedMilliseconds) / 1000.0f;
+
+    return fmod(elapsedSeconds, upperBound);
+}
+
+
 int main(int argc, char** argv) {
+    if (argc != 4) {
+        cerr << "Wrong number of arguments supplied" << endl;
+        exit(1);
+    }
+
     WindowState window{"Still Water", 2560, 1440};
     VulkanState vkstate{window};
 
@@ -170,12 +232,12 @@ int main(int argc, char** argv) {
     shaders.push_back(Shader{
         vkstate,
         VK_SHADER_STAGE_VERTEX_BIT,
-        (argc > 1) ? argv[1] : "shaders/vert.spv"
+        argv[2]
     });
     shaders.push_back(Shader{
         vkstate,
         VK_SHADER_STAGE_FRAGMENT_BIT,
-        (argc > 2) ? argv[2] : "shaders/frag.spv"
+        argv[3]
     });
 
     vector<VkPushConstantRange> pushConstantRanges;
@@ -194,25 +256,24 @@ int main(int argc, char** argv) {
         move(pushConstantRanges),
         move(vertexDescriptions)};
 
-    float time = 0.0f;
-    float theta = half_pi<float>();
+    auto referenceTimePoint = chrono::steady_clock::now();
 
-    VertexBuffer<Vertex> vertexBuffer{vkstate, 1000000};
+    VertexBuffer<Vertex> vertexBuffer{vkstate, 10000000};
 
     while (window.isActive()) {
+
+        // compute push constants based on perturbed variables
         auto pushConstants = PushConstants{
-            time,
-            theta,
-            ivec2{42, 69},
+            computeElapsedTime(referenceTimePoint, 20.0f) - 10.0f,
+            ivec2{512, 512},
             vec3{-0.5f, -0.5f, 0.1f},
             vec3{0.5f, 0.5f, 0.0f},
+            argv[1],
         };
-        time = (time >= 1.0f) ? -1.0f : time + 0.001f;
-        theta = (theta >= two_pi<float>()) ? 0.0f : theta + 0.001f;
 
         vertexBuffer.setVertices(generateVertexGrid(
-            42,
-            69));
+            512,
+            512));
         vertexBuffer.syncWithGpuMemory();
 
         glfwPollEvents();

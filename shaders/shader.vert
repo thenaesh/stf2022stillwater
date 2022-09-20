@@ -26,10 +26,10 @@ uvec2 agaj = PushConstants.agaj;
 uvec2 gaja = PushConstants.gaja;
 uvec2 ajag = PushConstants.ajag;
 
-mat3 A;
-mat3 B;
-mat3 C;
-mat3 D;
+dmat3 A;
+dmat3 B;
+dmat3 C;
+dmat3 D;
 
 float r = vertexGridCoords.x;
 float c = vertexGridCoords.y;
@@ -40,7 +40,7 @@ float amp(float r0, float c0, float r, float c, float rMax, float cMax) {
     return exp(-(pow((r - r0)/(rMax - r0), 2) + pow((c - c0)/(cMax - c0), 2))) * 0.1;
 }
 
-vec3 transformZ(vec3 src, mat3 V, mat3 W) {
+vec3 transformZ(vec3 src, dmat3 V, dmat3 W) {
     float z = 0.0;
     float N = 30.0;
     for (float i = N/2; i < N; i++) {
@@ -54,7 +54,7 @@ vec3 transformZ(vec3 src, mat3 V, mat3 W) {
 
         int c3 = int(mod(c, 3));
         int r3 = int(mod(r, 3));
-        dz *= clamp(abs(W[c3][r3] - V[c3][r3]), 0.0, 1.0);
+        dz *= float(clamp(abs(W[c3][r3] - V[c3][r3]), 0.0, 1.0));
 
         z += dz;
     }
@@ -65,13 +65,21 @@ vec3 transformZ(vec3 src, mat3 V, mat3 W) {
 mat4 viewTransform = PushConstants.viewTransformMatrix;
 
 void main() {
-    A[0] = vec3(float(jaga.x), float(jaga.y), float(agaj.x));
-    A[1] = vec3(float(agaj.y), float(gaja.x), float(gaja.x));
-    A[2] = vec3(float(gaja.y), float(ajag.x), float(ajag.y));
+    A[0] = dvec3(double(jaga.x), double(jaga.y), double(agaj.x));
+    A[1] = dvec3(double(agaj.y), double(gaja.x), double(gaja.x));
+    A[2] = dvec3(double(gaja.y), double(ajag.x), double(ajag.y));
 
-    B[0] = vec3(1.0, 0.0, 0.0);
-    B[1] = vec3(0.0, 1.0, 0.0);
-    B[2] = vec3(0.0, 0.0, 1.0);
+    B[0] = dvec3(-3.0, 8.0, -4.0);
+    B[1] = dvec3(3.0, -12.0, 7.0);
+    B[2] = dvec3(-1.0, 5.0, -3.0);
+
+/*
+    inv(B) = (
+        1 4 8
+        2 5 9
+        3 7 12
+    )
+ */
 
     C = A * B;
 
@@ -81,10 +89,22 @@ agaj 1412775461, 1819044159    uint2
 gaja 1044332604, 758933588    uint2
 ajag 857818482, 759053357    uint2
  */
+/*
+    without B
+    D[0] = dvec3(1345532779.0, 1077705517.0, 1412775461.0);
+    D[1] = dvec3(1819044159.0, 1044332604.0, 1044332604.0);
+    D[2] = dvec3(758933588.0, 857818482.0, 759053357.0);
 
-    D[0] = vec3(1345532779.0, 1077705517.0, 1412775461.0);
-    D[1] = vec3(1819044159.0, 1044332604.0, 1044332604.0);
-    D[2] = vec3(758933588.0, 857818482.0, 759053357.0);
+    with B
+    D = (7480020583 | 1690270353 | 1080121021
+    -12479396455 | -3294145323 | -2980291366
+    5472887252 | 1570502057 | 1531727488)
+ */
+
+
+    D[0] = dvec3(7480020583.0, 1690270353.0, 1080121021.0);
+    D[1] = dvec3(-12479396455.0, -3294145323.0, -2980291366.0);
+    D[2] = dvec3(5472887252.0, 1570502057.0, 1531727488.0);
 
     // NOTE: z is the upwards direction
     gl_Position = viewTransform * vec4(transformZ(vertexPosition, C, D), 1.0);

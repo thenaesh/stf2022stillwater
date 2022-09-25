@@ -9,6 +9,9 @@ using namespace std::chrono_literals;
 using namespace glm;
 
 
+#include <shaderbytes.h>
+
+
 struct PushConstants{
     vec2 time;
     ivec2 gridBounds;
@@ -224,7 +227,10 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    WindowState window{"Still Water", 2560, 1440};
+    unsigned int width = atoi(argv[2]);
+    unsigned int height = atoi(argv[3]);
+
+    WindowState window{"Still Water", width, height};
     VulkanState vkstate{window};
 
     vector<Shader> shaders;
@@ -232,12 +238,14 @@ int main(int argc, char** argv) {
     shaders.push_back(Shader{
         vkstate,
         VK_SHADER_STAGE_VERTEX_BIT,
-        argv[2]
+        vertexShader,
+        8456
     });
     shaders.push_back(Shader{
         vkstate,
         VK_SHADER_STAGE_FRAGMENT_BIT,
-        argv[3]
+        fragmentShader,
+        572
     });
 
     vector<VkPushConstantRange> pushConstantRanges;

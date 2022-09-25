@@ -7,6 +7,10 @@ Shader::Shader(VulkanState const& state, VkShaderStageFlagBits stage, string fil
     this->readFromFile(filename);
     this->createShaderModule();
 }
+Shader::Shader(VulkanState const& state, VkShaderStageFlagBits stage, unsigned char const* buf, size_t buflen): hasMoved{false}, state{state}, stage{stage} {
+    this->readFromCharBuffer(buf, buflen);
+    this->createShaderModule();
+}
 
 Shader::Shader(Shader&& o): hasMoved{false}, state{move(o.state)}, stage{o.stage}, bytecode{move(o.bytecode)}, shaderModule{o.shaderModule} {
     o.hasMoved = true;
@@ -39,6 +43,18 @@ void Shader::readFromFile(string filename) {
     shaderFile.read(this->bytecode.data(), shaderFileSize);
 
     shaderFile.close();
+}
+
+void Shader::readFromCharBuffer(unsigned char const* buf, size_t buflen) {
+    this->bytecode.resize(buflen);
+
+    // undo the trolling from dump_shader.py
+    for (size_t i = 0; i < buflen; i++) {
+        unsigned char b = buf[i] ^ 0xFF;
+        unsigned char c = b & 0b11100000;
+        unsigned char d = (b << 3) | (c >> 5);
+        this->bytecode[buflen - i - 1] = d;
+    }
 }
 
 void Shader::createShaderModule() {

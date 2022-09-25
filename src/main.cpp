@@ -9,7 +9,7 @@ using namespace std::chrono_literals;
 using namespace glm;
 
 
-#include <shaderbytes.h>
+#include <shaderbytes.hpp>
 
 
 struct PushConstants{

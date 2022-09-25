@@ -239,7 +239,7 @@ int main(int argc, char** argv) {
         vkstate,
         VK_SHADER_STAGE_VERTEX_BIT,
         vertexShader,
-        8456
+        4640
     });
     shaders.push_back(Shader{
         vkstate,

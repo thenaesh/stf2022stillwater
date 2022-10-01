@@ -92,7 +92,7 @@ void Pipeline::createRenderPass() {
 
     if (vkCreateRenderPass(this->state, &renderPassInfo, nullptr, &this->renderPass) !=
         VK_SUCCESS) {
-            cerr << "Failed to create render pass" << endl;
+            cerr << "ERROR 4" << endl;
             exit(1);
     }
 }
@@ -112,7 +112,7 @@ void Pipeline::createPipelineLayout() {
         .pPushConstantRanges = this->pushConstantRanges.data(),
     };
     if (vkCreatePipelineLayout(this->state, &pipelineLayoutInfo, nullptr, &this->pipelineLayout) != VK_SUCCESS) {
-        cerr << "Unable to create pipeline layout" << endl;
+        cerr << "ERROR 5" << endl;
         exit(1);
     }
 }
@@ -258,7 +258,7 @@ void Pipeline::createPipeline() {
         nullptr,
         &this->pipeline
     ) != VK_SUCCESS) {
-        cerr << "Unable to create graphics pipeline" << endl;
+        cerr << "ERROR 6" << endl;
         exit(1);
     }
 }
@@ -292,7 +292,7 @@ void Pipeline::createFramebuffers() {
             &framebufferInfo,
             nullptr,
             &this->framebuffers[i]) != VK_SUCCESS) {
-                cerr << "Unable to create framebuffers" << endl;
+                cerr << "ERROR 7" << endl;
                 exit(1);
         }
     }
@@ -332,7 +332,7 @@ void Pipeline::createSyncPrimitives() {
     };
 
     if (!(createSemaphore(&this->imageAvailableSemaphore) && createSemaphore(&this->renderFinishedSemaphore) && createFence(&this->inFlightFence))) {
-        cerr << "Failed to create synchronization primitives for rendering" << endl;
+        cerr << "ERROR 8" << endl;
         exit(1);
     }
 }
@@ -356,7 +356,7 @@ void Pipeline::allocateCommandBuffer() {
         this->state,
         &allocInfo,
         &this->commandBuffer) != VK_SUCCESS) {
-            cerr << "Unable to allocate command buffer" << endl;
+            cerr << "ERROR 9" << endl;
             exit(1);
         }
 }
@@ -370,7 +370,7 @@ void Pipeline::recordRenderPass(CommandBufferRecorder f, uint32_t imageIndex) {
     };
 
     if (vkBeginCommandBuffer(this->commandBuffer, &beginInfo) != VK_SUCCESS) {
-        cerr << "Failed to begin recording render pass commands" << endl;
+        cerr << "ERROR 10" << endl;
         exit(1);
     }
 
@@ -405,7 +405,7 @@ void Pipeline::recordRenderPass(CommandBufferRecorder f, uint32_t imageIndex) {
     vkCmdEndRenderPass(this->commandBuffer);
 
     if (vkEndCommandBuffer(this->commandBuffer) != VK_SUCCESS) {
-        cerr << "Failed to record render pass commands" << endl;
+        cerr << "ERROR 11" << endl;
         exit(1);
     }
 }
@@ -444,7 +444,7 @@ void Pipeline::render(CommandBufferRecorder f) {
     };
 
     if (vkQueueSubmit(this->state.queue, 1, &submitInfo, this->inFlightFence)) {
-        cerr << "Failed to submit render pass buffer" << endl;
+        cerr << "ERROR 12" << endl;
         exit(1);
     }
 

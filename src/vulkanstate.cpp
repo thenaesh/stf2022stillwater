@@ -110,7 +110,7 @@ void VulkanState::initVulkanInstance() {
 #endif
 
     if (vkCreateInstance(&createInfo, nullptr, &this->vkinstance) != VK_SUCCESS) {
-        cerr << "Error creating Vulkan instance" << endl;
+        cerr << "ERROR 16" << endl;
         exit(1);
     }
 }
@@ -153,7 +153,7 @@ VkPhysicalDevice VulkanState::findSuitablePhysicalDevice(PhysicalDeviceSuitabili
         }
     }
 
-    cerr << "No physical devices found" << endl;
+    cerr << "ERROR 17" << endl;
     exit(1);
 }
 
@@ -220,7 +220,7 @@ QueueFamilyChoice VulkanState::findSuitableQueueFamily(QueueFamilySuitabilityChe
     }
 
     if (suitableQueueFamilyChoices.empty()) {
-        cerr << "No supported queue families found" << endl;
+        cerr << "ERROR 18" << endl;
         exit(1);
     }
 
@@ -284,7 +284,7 @@ void VulkanState::createLogicalDeviceAndQueue() {
         &createInfo,
         nullptr,
         &device) != VK_SUCCESS) {
-        cerr << "Unable to create device and queue" << endl;
+        cerr << "ERROR 19" << endl;
         exit(1);
     }
 
@@ -418,7 +418,7 @@ void VulkanState::createSwapChain() {
     };
 
     if (vkCreateSwapchainKHR(this->device, &createInfo, nullptr, &this->swapChain) != VK_SUCCESS) {
-        cerr << "Unable to create swap chain" << endl;
+        cerr << "ERROR 20" << endl;
         exit(1);
     }
 
@@ -459,7 +459,7 @@ void VulkanState::createImageViews() {
         };
 
         if (vkCreateImageView(this->device, &createInfo, nullptr, &this->imageViews[i]) != VK_SUCCESS) {
-            cerr << "Unable to create image view for image " << i << endl;
+            cerr << "ERROR 21 " << i << endl;
         }
     }
 }
@@ -483,7 +483,7 @@ void VulkanState::createCommandPool() {
         &poolInfo,
         nullptr,
         &this->commandPool) != VK_SUCCESS) {
-            cerr << "Failed to create command pool" << endl;
+            cerr << "ERROR 22" << endl;
             exit(1);
     }
 }
@@ -526,7 +526,7 @@ uint32_t VulkanState::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags 
       }
     }
 
-    cerr << "No suitable memory type" << endl;
+    cerr << "ERROR 23" << endl;
     exit(1);
 }
 
@@ -554,7 +554,7 @@ void VulkanState::createImage(
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     if (vkCreateImage(this->device, &imageInfo, nullptr, &image) != VK_SUCCESS) {
-        cerr << "Failed to create iamge" << endl;
+        cerr << "ERROR 24" << endl;
         exit(1);
     }
 
@@ -572,7 +572,7 @@ void VulkanState::createImage(
             nullptr,
             &imageMemory) != VK_SUCCESS
     ) {
-        cerr << "Failed to allocate image memory" << endl;
+        cerr << "ERROR 25" << endl;
         exit(1);
     }
 
@@ -596,7 +596,7 @@ VkImageView VulkanState::createImageView(VkImage image, VkFormat format, VkImage
 
     VkImageView imageView;
     if (vkCreateImageView(device, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
-        cerr << "Failed to create image view" << endl;
+        cerr << "ERROR 26" << endl;
         exit(1);
     }
 

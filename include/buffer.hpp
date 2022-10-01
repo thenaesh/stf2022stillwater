@@ -122,7 +122,7 @@ struct VertexBuffer {
             &bufferInfo,
             nullptr,
             &this->buf) != VK_SUCCESS) {
-                cerr << "Failed to create vertex buffer" << endl;
+                cerr << "ERROR 1" << endl;
                 exit(1);
         }
     }
@@ -157,7 +157,7 @@ struct VertexBuffer {
                     &allocInfo,
                     nullptr,
                     &this->bufMem) != VK_SUCCESS) {
-            cerr << "Failed to allocate vertex buffer memory" << endl;
+            cerr << "ERROR 2" << endl;
             exit(1);
         }
 

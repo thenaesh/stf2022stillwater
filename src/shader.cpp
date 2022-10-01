@@ -28,13 +28,13 @@ Shader::~Shader() {
 void Shader::readFromFile(string filename) {
     ifstream shaderFile{filename, ios::ate | ios::binary};
     if (!shaderFile.is_open()) {
-        cerr << "Error opening shader file" << endl;
+        cerr << "ERROR 13" << endl;
         exit(1);
     }
 
     auto shaderFileSize = shaderFile.tellg();
     if (shaderFileSize == -1) {
-        cerr << "Error getting shader file size" << endl;
+        cerr << "ERROR 14" << endl;
         exit(1);
     }
     this->bytecode.resize(static_cast<size_t>(shaderFileSize));
@@ -65,7 +65,7 @@ void Shader::createShaderModule() {
     };
 
     if (vkCreateShaderModule(this->state, &createInfo, nullptr, &this->shaderModule) != VK_SUCCESS) {
-        cerr << "Cannot create shader module" << endl;
+        cerr << "ERROR 15" << endl;
         exit(1);
     }
 }

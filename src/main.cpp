@@ -184,7 +184,7 @@ struct Vertex {
 
 vector<Vertex> generateVertexGrid(int num_rows, int num_cols, bool useWireFrame) {
     if (num_rows < 2 || num_cols < 2) {
-        cerr << "Vertex grid must have at least 2 rows and 2 columns" << endl;
+        cerr << "ERROR 3" << endl;
         exit(1);
     }
 

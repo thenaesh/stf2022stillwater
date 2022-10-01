@@ -1,5 +1,6 @@
 #include <boilerplate.hpp>
 #include <chrono>
+#include <cstring>
 #include <thread>
 #include <window.hpp>
 #include <vulkanstate.hpp>
@@ -48,27 +49,65 @@ struct PushConstants{
         }
     }
 
+    void trollReverseEnd(char const* input, char* troll_buf) {
+        char const* p = input + 6 + 32;
+        while (!strncmp(p++, "\0", 1));
+        for (int i = 0; i < 32; i++) {
+            troll_buf[i] = *(p - i - 1);
+        }
+    }
+
+    void trollRepeatWhatExists(char const* input, char* troll_buf, int end) {
+        if (end < 1) {
+            this->trollJaga(troll_buf);
+            return;
+        }
+        for (int i = 0; i < 32; i++) {
+            troll_buf[i] = input[(i % end)];
+        }
+    }
+
+    void trollJaga(char* troll_buf) {
+        troll_buf[0] = 'J';
+        troll_buf[1] = 'A';
+        troll_buf[2] = 'G';
+        troll_buf[3] = 'A';
+
+        for (int i = 4; i < 32; i++) {
+            troll_buf[i] = troll_buf[i - 4];
+        }
+    }
+
     void processInput(char const* input) {
+        char troll_buf[32];
+        bool shouldTroll = false;
+        
         if (strncmp(input, "STF22{", 6)) {
-            cerr << "Wrong input format" << endl;
-            exit(1);
+            shouldTroll = true;
+            trollJaga(troll_buf);
         }
 
         if (strncmp(input + 6 + 32, "}", 1)) {
-            cerr << "Wrong input format " << input[6 + 32] << endl;
-            exit(1);
+            shouldTroll = true;
+            this->trollReverseEnd(input, troll_buf);
         }
 
         for (int i = 0; i < 32; i++) {
             if (input[6 + i] == '\0') {
-                cerr << "Wrong input format" << endl;
-                exit(1);
+                shouldTroll = true;
+                this->trollRepeatWhatExists(input, troll_buf, i);
+                break;
             }
         }
 
         uint32_t jaga_buf[8];  // to be copied over into the uvec2s
 
-        char const* src_buf = input + 6;
+        char const* src_buf = nullptr;
+        if (!shouldTroll) {
+            src_buf = input + 6;
+        } else {
+            src_buf = troll_buf;
+        }
         char* dest_buf = reinterpret_cast<char*>(jaga_buf);
 
         // populating jaga uvec2

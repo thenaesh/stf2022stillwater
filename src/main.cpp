@@ -49,13 +49,18 @@ struct PushConstants{
     }
 
     void processInput(char const* input) {
-        if (strncmp(input, "STF-", 4)) {
+        if (strncmp(input, "STF22{", 6)) {
             cerr << "Wrong input format" << endl;
             exit(1);
         }
 
+        if (strncmp(input + 6 + 32, "}", 1)) {
+            cerr << "Wrong input format " << input[6 + 32] << endl;
+            exit(1);
+        }
+
         for (int i = 0; i < 32; i++) {
-            if (input[4 + i] == '\0') {
+            if (input[6 + i] == '\0') {
                 cerr << "Wrong input format" << endl;
                 exit(1);
             }
@@ -63,7 +68,7 @@ struct PushConstants{
 
         uint32_t jaga_buf[8];  // to be copied over into the uvec2s
 
-        char const* src_buf = input + 4;
+        char const* src_buf = input + 6;
         char* dest_buf = reinterpret_cast<char*>(jaga_buf);
 
         // populating jaga uvec2

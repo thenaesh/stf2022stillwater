@@ -22,4 +22,4 @@ The participant is expected to identify from the binary that Vulkan is being use
 
 ## Flag
 
-`STF-k33P-{<@>5T%ill??><@<-Th3rE!--<>`
+`STF22{k33P-{<@>5T%ill??><@<-Th3rE!--<>}`

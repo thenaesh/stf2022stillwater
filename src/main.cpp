@@ -182,7 +182,7 @@ struct Vertex {
 };
 
 
-vector<Vertex> generateVertexGrid(int num_rows, int num_cols) {
+vector<Vertex> generateVertexGrid(int num_rows, int num_cols, bool useWireFrame) {
     if (num_rows < 2 || num_cols < 2) {
         cerr << "Vertex grid must have at least 2 rows and 2 columns" << endl;
         exit(1);
@@ -202,7 +202,7 @@ vector<Vertex> generateVertexGrid(int num_rows, int num_cols) {
     // use a sliding window of rectangles (4 vertices each)
     for (int r = 0; r < num_rows - 1; r++) {
         for (int c = 0; c < num_cols - 1; c++) {
-            auto color = colors[(r + c) % 3];
+            auto color = useWireFrame ? colors[(r + c) % 3]: vec3{0.02f, 0.46f, 0.52f};
             // get all triangles in window
             Vertex tl{
                 .position = {
@@ -266,13 +266,15 @@ float computeElapsedTime(chrono::steady_clock::time_point referenceTimePoint, fl
 
 
 int main(int argc, char** argv) {
-    if (argc != 4) {
-        cerr << "Wrong number of arguments supplied" << endl;
+    if (argc < 4 || argc > 5) {
+        cerr << "Usage: ./stillwater <flag> <width in pixels> <height in pixels>" << endl;
         exit(1);
     }
 
     unsigned int width = atoi(argv[2]);
     unsigned int height = atoi(argv[3]);
+
+    bool useWireFrame = argc == 5;
 
     WindowState window{"Still Water", width, height};
     VulkanState vkstate{window};
@@ -325,7 +327,8 @@ int main(int argc, char** argv) {
 
         vertexBuffer.setVertices(generateVertexGrid(
             512,
-            512));
+            512,
+            useWireFrame));
         vertexBuffer.syncWithGpuMemory();
 
         glfwPollEvents();
